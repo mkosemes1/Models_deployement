@@ -1,8 +1,6 @@
 streamlit
 pandas
 numpy
-# IMPORTANT : même version de scikit-learn que dans vos notebooks.
-# Vérifier en local avec :  python -c "import sklearn; print(sklearn.__version__)"
 scikit-learn==1.8.0
 joblib
 openpyxl
