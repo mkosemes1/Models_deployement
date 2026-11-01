@@ -12,12 +12,15 @@ Chaque page propose :
 Lancer l'application :  streamlit run app.py
 Les fichiers .joblib produits par les notebooks doivent être dans le dossier  models/
 """
+import warnings
 from pathlib import Path
 
 import joblib as jb
 import numpy as np
 import pandas as pd
+import sklearn
 import streamlit as st
+from sklearn.exceptions import InconsistentVersionWarning
 from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score
 
 MODELS_DIR = Path(__file__).parent / "models"
@@ -106,12 +109,26 @@ PAGES = [
 # ----------------------------------------------------------------------
 @st.cache_resource(show_spinner=False)
 def charger_artefacts(prefix):
-    """Retourne (artefacts, fichiers_manquants)."""
+    """Retourne (artefacts, fichiers_manquants, probleme)."""
     noms = ["model", "encoders", "scaler", "uniques", "features"]
     manquants = [f"{prefix}_{n}.joblib" for n in noms if not (MODELS_DIR / f"{prefix}_{n}.joblib").exists()]
     if manquants:
-        return None, manquants
-    return {n: jb.load(MODELS_DIR / f"{prefix}_{n}.joblib") for n in noms}, []
+        return None, manquants, None
+    try:
+        with warnings.catch_warnings(record=True) as avertissements:
+            warnings.simplefilter("always")
+            art = {n: jb.load(MODELS_DIR / f"{prefix}_{n}.joblib") for n in noms}
+    except Exception as e:  # fichier illisible : le plus souvent, version de scikit-learn différente
+        return None, [], f"{type(e).__name__} : {e}"
+    # version de scikit-learn utilisée à l'entraînement (différente de celle installée ?)
+    versions = sorted({w.message.original_sklearn_version for w in avertissements
+                       if issubclass(w.category, InconsistentVersionWarning)})
+    probleme = None
+    if versions:
+        probleme = (f"Les modèles ont été entraînés avec scikit-learn {', '.join(versions)}, mais la version "
+                    f"installée est {sklearn.__version__}. Mettez `scikit-learn=={versions[0]}` dans "
+                    "requirements.txt, enregistrez, puis redémarrez l'application.")
+    return art, [], probleme
 
 
 # ----------------------------------------------------------------------
@@ -318,11 +335,17 @@ def onglet_fichier(cfg, art):
 def afficher_page(cfg):
     st.title(f"{cfg['icon']} {cfg['title']}")
     st.markdown(cfg["description"])
-    art, manquants = charger_artefacts(cfg["prefix"])
+    art, manquants, probleme = charger_artefacts(cfg["prefix"])
     if art is None:
-        st.error("Fichiers introuvables dans le dossier `models/` : " + ", ".join(manquants)
-                 + f". Exécutez le notebook `{cfg['notebook']}` puis copiez ces fichiers dans `models/`.")
+        if manquants:
+            st.error("Fichiers introuvables dans le dossier `models/` : " + ", ".join(manquants)
+                     + f". Exécutez le notebook `{cfg['notebook']}` puis copiez ces fichiers dans `models/`.")
+        else:
+            st.error(f"Impossible de charger les modèles ({probleme}). Vérifiez que la version de "
+                     "scikit-learn dans requirements.txt est celle utilisée dans les notebooks.")
         st.stop()
+    if probleme:
+        st.warning(probleme)
     onglet1, onglet2 = st.tabs(["Prédiction unitaire", "Prédiction sur un jeu de données complet"])
     with onglet1:
         onglet_unitaire(cfg, art)
