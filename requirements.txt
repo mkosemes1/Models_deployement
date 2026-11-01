@@ -1,0 +1,7 @@
+streamlit>=1.40
+pandas>=2.2
+numpy>=1.26
+# IMPORTANT : même version de scikit-learn que dans les notebooks (vérifier avec : import sklearn; print(sklearn.__version__))
+scikit-learn==1.8.0
+joblib>=1.4
+openpyxl>=3.1
