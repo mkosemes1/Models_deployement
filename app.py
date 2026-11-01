@@ -183,7 +183,6 @@ def predire(df_in, art, cfg):
             out[nom_pred] = pd.Series(enc_cible.inverse_transform(pred.astype(int)), index=index_ok)
             if hasattr(art["model"], "predict_proba"):
                 proba = pd.DataFrame(art["model"].predict_proba(Xs), columns=enc_cible.classes_, index=index_ok)
-                out["Confiance (%)"] = (proba.max(axis=1) * 100).round(1)
         else:
             out[nom_pred] = pd.Series(pred, index=index_ok).round(2)
 
