@@ -27,138 +27,245 @@ MODELS_DIR = Path(__file__).parent / "models"
 
 CSS = """
 <style>
-    /* --- Palette et fond --- */
+    /* ================= FOND & POLICES ================= */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        background:
+            radial-gradient(1200px 600px at 10% -10%, rgba(37,99,235,0.18), transparent 55%),
+            radial-gradient(900px 500px at 110% 10%, rgba(124,58,237,0.14), transparent 50%),
+            linear-gradient(180deg, #0b1220 0%, #0f172a 55%, #111827 100%);
+        background-attachment: fixed;
+    }
+    html, body, [class*="css"], .stApp, .block-container {
+        font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif !important;
     }
     section[data-testid="stSidebar"] {
-        background: #0b1220;
-        border-right: 1px solid #1e293b;
+        background: linear-gradient(180deg, #0a0f1a 0%, #0d1526 100%) !important;
+        border-right: 1px solid rgba(51, 65, 85, 0.7);
     }
-    /* --- Titres --- */
-    h1, h2, h3 {
-        font-family: 'Segoe UI', system-ui, sans-serif !important;
-        color: #e2e8f0 !important;
-        letter-spacing: -0.5px;
+    h1, h2, h3, h4 {
+        color: #f1f5f9 !important;
+        letter-spacing: -0.4px;
+        font-weight: 700 !important;
     }
-    h1 { font-weight: 700 !important; }
-    p, li, label, .stMarkdown {
+    p, li, .stMarkdown, label, span {
         color: #cbd5e1 !important;
-        font-family: 'Segoe UI', system-ui, sans-serif !important;
     }
-    /* --- Carte du formulaire --- */
+    /* ================= SIDEBAR / MARQUE ================= */
+    .brand {
+        text-align: center;
+        padding: 1.4rem 1rem 0.6rem;
+    }
+    .brand .avatar-wrap {
+        width: 92px; height: 92px; margin: 0 auto 0.7rem;
+        border-radius: 50%; padding: 3px;
+        background: conic-gradient(from 210deg, #38bdf8, #818cf8, #c084fc, #38bdf8);
+        box-shadow: 0 8px 28px rgba(99, 102, 241, 0.45);
+    }
+    .brand .avatar-wrap img {
+        width: 100%; height: 100%; border-radius: 50%;
+        object-fit: cover; border: 3px solid #0a0f1a; display: block;
+    }
+    .brand .brand-name {
+        font-size: 1.35rem; font-weight: 800; margin: 0;
+        background: linear-gradient(90deg, #38bdf8 0%, #a78bfa 55%, #f472b6 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        letter-spacing: 0.2px;
+    }
+    .brand .brand-sub {
+        font-size: 0.78rem; color: #64748b !important; margin-top: 4px;
+        text-transform: uppercase; letter-spacing: 1.6px;
+    }
+    .brand .brand-badge {
+        display: inline-block; margin-top: 10px; padding: 4px 12px;
+        font-size: 0.7rem; font-weight: 600; color: #93c5fd !important;
+        background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.4);
+        border-radius: 999px; letter-spacing: 0.6px;
+    }
+    .divider {
+        border: none; border-top: 1px solid rgba(51,65,85,0.7);
+        margin: 1.1rem 0.4rem;
+    }
+    /* ================= HEADER DE PAGE ================= */
+    .page-header {
+        position: relative;
+        background: linear-gradient(100deg, rgba(37,99,235,0.28) 0%, rgba(124,58,237,0.16) 55%, rgba(236,72,153,0.10) 100%);
+        border: 1px solid rgba(99,102,241,0.35);
+        border-radius: 18px;
+        padding: 1.6rem 2rem 1.5rem;
+        margin-bottom: 1.6rem;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    }
+    .page-header::before {
+        content: ""; position: absolute; top: -40%; right: -8%;
+        width: 260px; height: 260px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(124,58,237,0.35), transparent 65%);
+        pointer-events: none;
+    }
+    .page-header h1 {
+        margin: 0 0 0.45rem 0 !important;
+        font-size: 2rem !important;
+        text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .page-header p {
+        margin: 0 !important; color: #a5b4c8 !important;
+        font-size: 1rem; line-height: 1.55; max-width: 820px;
+    }
+    /* ================= FORMULAIRE ================= */
     [data-testid="stForm"] {
-        background: rgba(30, 41, 59, 0.75);
-        border: 1px solid #334155;
-        border-radius: 16px;
-        padding: 1.6rem 1.8rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-        backdrop-filter: blur(8px);
+        background: linear-gradient(180deg, rgba(30,41,59,0.92) 0%, rgba(23,32,51,0.95) 100%);
+        border: 1px solid rgba(71,85,105,0.8);
+        border-radius: 20px;
+        padding: 2rem 2.2rem;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
     }
-    /* --- Champs de saisie --- */
-    [data-testid="stNumberInput"], [data-testid="stSelectbox"] {
-        background: #0f172a;
-        border: 1px solid #334155;
-        border-radius: 10px;
+    [data-testid="stForm"] label {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+        font-size: 0.86rem !important;
+        letter-spacing: 0.2px;
     }
-    [data-baseweb="input"], [data-baseweb="select"] > div {
-        background: #0f172a !important;
-        border-color: #334155 !important;
-        border-radius: 10px !important;
+    /* ---- Champs plus nets et lisibles ---- */
+    [data-baseweb="input"] > div,
+    [data-baseweb="select"] > div {
+        background: #0d1424 !important;
+        border: 1.5px solid #475569 !important;
+        border-radius: 12px !important;
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.35);
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
-    /* --- Boutons --- */
+    [data-baseweb="input"] > div:hover,
+    [data-baseweb="select"] > div:hover {
+        border-color: #64748b !important;
+    }
+    [data-baseweb="input"] > div:focus-within,
+    [data-baseweb="select"] > div:focus-within {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 3px rgba(56,189,248,0.25), inset 0 2px 6px rgba(0,0,0,0.35) !important;
+    }
+    [data-baseweb="input"] input, [data-baseweb="select"] input {
+        color: #f8fafc !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        caret-color: #38bdf8;
+    }
+    [data-baseweb="input"] input::placeholder { color: #64748b !important; font-weight: 400; }
+    [data-baseweb="select"] [aria-label] { color: #f8fafc !important; font-weight: 600; }
+    /* Steppers des number inputs */
+    [data-baseweb="input"] button {
+        background: #1e293b !important; color: #cbd5e1 !important;
+        border: 1px solid #334155 !important; border-radius: 8px !important;
+    }
+    [data-baseweb="input"] button:hover { background: #334155 !important; color: #fff !important; }
+    /* ================= BOUTONS ================= */
     .stButton > button, [data-testid="stFormSubmitButton"] > button,
     [data-testid="stDownloadButton"] > button {
-        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+        background: linear-gradient(135deg, #2563eb 0%, #6d28d9 55%, #a21caf 100%) !important;
         color: #fff !important;
-        border: none !important;
-        border-radius: 10px !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.3px;
-        padding: 0.55rem 1.6rem !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.4px;
+        padding: 0.6rem 2rem !important;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+        box-shadow: 0 6px 20px rgba(37,99,235,0.45);
+        text-transform: uppercase;
+        font-size: 0.85rem !important;
     }
     .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover,
     [data-testid="stDownloadButton"] > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 22px rgba(124, 58, 237, 0.45);
+        filter: brightness(1.12);
+        box-shadow: 0 10px 28px rgba(124,58,237,0.55);
     }
-    /* --- Métriques --- */
+    .stButton > button:active { transform: translateY(0); }
+    /* ================= MÉTRIQUES ================= */
     [data-testid="stMetric"] {
-        background: rgba(30, 41, 59, 0.8);
-        border: 1px solid #334155;
-        border-radius: 14px;
-        padding: 1rem 1.2rem;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+        background: linear-gradient(160deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95));
+        border: 1px solid rgba(71,85,105,0.8);
+        border-radius: 16px;
+        padding: 1.1rem 1.3rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
     }
-    [data-testid="stMetricLabel"] { color: #94a3b8 !important; }
-    [data-testid="stMetricValue"] { color: #38bdf8 !important; font-weight: 700 !important; }
-    /* --- Onglets --- */
-    [data-baseweb="tab-list"] { gap: 6px; border-bottom: 1px solid #334155; }
+    [data-testid="stMetricLabel"] { color: #94a3b8 !important; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.75rem !important; }
+    [data-testid="stMetricValue"] { color: #38bdf8 !important; font-weight: 800 !important; font-size: 1.7rem !important; }
+    [data-testid="stMetricDelta"] { color: #34d399 !important; }
+    /* ================= ONGLETS ================= */
+    [data-baseweb="tab-list"] {
+        gap: 8px; border-bottom: 1px solid rgba(51,65,85,0.8);
+        padding-bottom: 4px;
+    }
     [data-baseweb="tab"] {
-        background: transparent; border-radius: 10px 10px 0 0;
-        color: #94a3b8; font-weight: 600; padding: 8px 22px;
+        background: transparent !important;
+        border-radius: 12px 12px 0 0 !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+        padding: 10px 26px !important;
+        transition: color 0.15s ease, background 0.15s ease;
     }
+    [data-baseweb="tab"]:hover { color: #cbd5e1 !important; background: rgba(51,65,85,0.3) !important; }
     [aria-selected="true"] {
-        background: rgba(37, 99, 235, 0.25) !important;
+        background: linear-gradient(180deg, rgba(37,99,235,0.30), rgba(37,99,235,0.08)) !important;
         color: #60a5fa !important;
-        border-bottom: 2px solid #2563eb;
+        border-bottom: 3px solid #38bdf8 !important;
     }
-    /* --- Messages --- */
+    /* ================= MESSAGES ================= */
     [data-testid="stSuccess"] {
-        background: rgba(16, 185, 129, 0.15); border-left: 4px solid #10b981;
-        border-radius: 10px; color: #a7f3d0;
+        background: rgba(16,185,129,0.14); border-left: 4px solid #10b981;
+        border-radius: 12px; color: #a7f3d0 !important;
+        border-top: 1px solid rgba(16,185,129,0.25); border-right: 1px solid rgba(16,185,129,0.25); border-bottom: 1px solid rgba(16,185,129,0.25);
     }
     [data-testid="stError"] {
-        background: rgba(239, 68, 68, 0.15); border-left: 4px solid #ef4444;
-        border-radius: 10px; color: #fecaca;
+        background: rgba(239,68,68,0.14); border-left: 4px solid #ef4444;
+        border-radius: 12px; color: #fecaca !important;
+        border-top: 1px solid rgba(239,68,68,0.25); border-right: 1px solid rgba(239,68,68,0.25); border-bottom: 1px solid rgba(239,68,68,0.25);
     }
     [data-testid="stWarning"] {
-        background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b;
-        border-radius: 10px; color: #fde68a;
+        background: rgba(245,158,11,0.14); border-left: 4px solid #f59e0b;
+        border-radius: 12px; color: #fde68a !important;
+        border-top: 1px solid rgba(245,158,11,0.25); border-right: 1px solid rgba(245,158,11,0.25); border-bottom: 1px solid rgba(245,158,11,0.25);
     }
     [data-testid="stInfo"] {
-        background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6;
-        border-radius: 10px; color: #bfdbfe;
+        background: rgba(59,130,246,0.14); border-left: 4px solid #3b82f6;
+        border-radius: 12px; color: #bfdbfe !important;
+        border-top: 1px solid rgba(59,130,246,0.25); border-right: 1px solid rgba(59,130,246,0.25); border-bottom: 1px solid rgba(59,130,246,0.25);
     }
-    /* --- Dataframe --- */
+    /* ================= TABLEAUX / UPLOAD ================= */
     [data-testid="stDataFrame"] {
-        border: 1px solid #334155; border-radius: 12px; overflow: hidden;
+        border: 1px solid rgba(71,85,105,0.8); border-radius: 14px; overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
-    /* --- Uploader --- */
     [data-testid="stFileUploader"] {
-        background: rgba(30, 41, 59, 0.7); border: 1px dashed #475569;
-        border-radius: 12px; padding: 1rem;
+        background: linear-gradient(180deg, rgba(30,41,59,0.85), rgba(15,23,42,0.9));
+        border: 2px dashed #475569 !important;
+        border-radius: 16px; padding: 1.4rem;
+        transition: border-color 0.15s ease;
     }
-    /* --- Logo sidebar --- */
-    .brand {
-        text-align: center; padding: 1.2rem 0 0.4rem;
+    [data-testid="stFileUploader"]:hover { border-color: #38bdf8 !important; }
+    /* ================= RÉSULTAT PRÉDICTION ================= */
+    .pred-card {
+        border-radius: 16px; padding: 1.4rem 1.8rem; margin: 0.8rem 0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        border: 1px solid;
+        animation: pop 0.25s ease;
     }
-    .brand .logo {
-        font-size: 2.6rem; display: block; margin-bottom: 0.3rem;
+    @keyframes pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .pred-card .pred-label {
+        font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.4px;
+        color: #94a3b8 !important; font-weight: 600;
     }
-    .brand h2 {
-        font-size: 1.15rem !important; font-weight: 700 !important;
-        background: linear-gradient(90deg, #60a5fa, #a78bfa);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        margin: 0 !important;
-    }
-    .brand p { font-size: 0.78rem; color: #64748b !important; margin-top: 2px !important; }
-    .divider { border-top: 1px solid #1e293b; margin: 1rem 0; }
-    /* --- Header page --- */
-    .page-header {
-        background: linear-gradient(90deg, rgba(37,99,235,0.25), rgba(124,58,237,0.12));
-        border: 1px solid #334155; border-radius: 16px;
-        padding: 1.3rem 1.8rem; margin-bottom: 1.4rem;
-    }
-    .page-header h1 { margin-bottom: 0.4rem !important; font-size: 1.9rem !important; }
-    .page-header p { margin: 0 !important; color: #94a3b8 !important; font-size: 0.98rem; }
-    /* --- Footer --- */
+    .pred-card .pred-value { font-size: 2rem; font-weight: 800; margin-top: 4px; }
+    .pred-ok { background: linear-gradient(120deg, rgba(16,185,129,0.18), rgba(6,95,70,0.12)); border-color: rgba(16,185,129,0.55); }
+    .pred-ok .pred-value { color: #34d399; text-shadow: 0 0 24px rgba(52,211,153,0.4); }
+    .pred-info { background: linear-gradient(120deg, rgba(59,130,246,0.18), rgba(37,99,235,0.10)); border-color: rgba(59,130,246,0.55); }
+    .pred-info .pred-value { color: #60a5fa; text-shadow: 0 0 24px rgba(96,165,250,0.4); }
+    /* ================= FOOTER ================= */
     .footer {
         text-align: center; color: #475569 !important; font-size: 0.8rem;
-        padding: 2rem 0 1rem; border-top: 1px solid #1e293b; margin-top: 2.5rem;
+        padding: 2.2rem 0 1.2rem; border-top: 1px solid rgba(30,41,59,0.9);
+        margin-top: 2.8rem; letter-spacing: 0.4px;
     }
+    .footer b { color: #64748b !important; }
 </style>
 """
 
@@ -167,14 +274,20 @@ def injecter_style():
     st.markdown(CSS, unsafe_allow_html=True)
     with st.sidebar:
         st.markdown(
-            '<div class="brand"><span class="logo">🤖</span>'
-            "<h2>ML Predict Studio</h2>"
-            "<p>Modèles de Machine Learning</p></div>"
-            '<div class="divider"></div>',
+            '<div class="brand">'
+            '<div class="avatar-wrap">'
+            '<img src="https://github.com/mkosemes1.png" alt="Souane" '
+            'onerror="this.src=\'https://github.com/identicons/mkosemes1.png\'">'
+            "</div>"
+            '<p class="brand-name">Souane\'s Models</p>'
+            '<p class="brand-sub">Machine Learning</p>'
+            '<span class="brand-badge">🚀 3 modèles déployés</span>'
+            "</div>"
+            "<hr class='divider'>",
             unsafe_allow_html=True,
         )
     st.markdown(
-        '<div class="footer">ML Predict Studio — Propulsé par Streamlit &amp; scikit-learn</div>',
+        '<div class="footer"><b>Souane\'s Models</b> — Propulsé par Streamlit &amp; scikit-learn</div>',
         unsafe_allow_html=True,
     )
 
@@ -434,12 +547,9 @@ def onglet_unitaire(cfg, art):
         afficher_problemes(problemes)
     elif cfg["task"] == "classification":
         st.markdown(
-            f'<div style="background:rgba(16,185,129,0.12);border:1px solid #10b981;'
-            f'border-radius:14px;padding:1.2rem 1.6rem;margin:0.6rem 0;">'
-            f'<span style="color:#94a3b8;font-size:0.85rem;text-transform:uppercase;'
-            f'letter-spacing:1px;">{cfg["target_label"]}</span><br>'
-            f'<span style="color:#34d399;font-size:1.7rem;font-weight:700;">'
-            f'{out.loc[0, nom_pred]}</span></div>',
+            f'<div class="pred-card pred-ok">'
+            f'<div class="pred-label">{cfg["target_label"]}</div>'
+            f'<div class="pred-value">{out.loc[0, nom_pred]}</div></div>',
             unsafe_allow_html=True,
         )
         if proba is not None:
@@ -447,12 +557,9 @@ def onglet_unitaire(cfg, art):
             st.bar_chart(proba.iloc[0])
     else:
         st.markdown(
-            f'<div style="background:rgba(59,130,246,0.12);border:1px solid #3b82f6;'
-            f'border-radius:14px;padding:1.2rem 1.6rem;margin:0.6rem 0;">'
-            f'<span style="color:#94a3b8;font-size:0.85rem;text-transform:uppercase;'
-            f'letter-spacing:1px;">{cfg["target_label"]}</span><br>'
-            f'<span style="color:#60a5fa;font-size:1.7rem;font-weight:700;">'
-            f'{out.loc[0, nom_pred]:,.2f}</span></div>',
+            f'<div class="pred-card pred-info">'
+            f'<div class="pred-label">{cfg["target_label"]}</div>'
+            f'<div class="pred-value">{out.loc[0, nom_pred]:,.2f}</div></div>',
             unsafe_allow_html=True,
         )
 
@@ -525,7 +632,7 @@ def afficher_page(cfg):
 
 
 def main():
-    st.set_page_config(page_title="ML Predict Studio", page_icon="🤖", layout="wide",
+    st.set_page_config(page_title="Souane's Models", page_icon="🧠", layout="wide",
                        initial_sidebar_state="expanded")
     injecter_style()
     pages = [
