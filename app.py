@@ -205,9 +205,9 @@ CSS = """
     }
     [data-baseweb="tab"]:hover { color: #cbd5e1 !important; background: rgba(51,65,85,0.3) !important; }
     [aria-selected="true"] {
-        background: linear-gradient(180deg, rgba(37,99,235,0.30), rgba(37,99,235,0.08)) !important;
-        color: #60a5fa !important;
-        border-bottom: 3px solid #38bdf8 !important;
+        background: rgba(37,99,235,0.12) !important;
+        color: #93c5fd !important;
+        border-bottom: 2px solid rgba(56,189,248,0.55) !important;
     }
     /* ================= MESSAGES ================= */
     [data-testid="stSuccess"] {
