@@ -25,6 +25,159 @@ from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score
 
 MODELS_DIR = Path(__file__).parent / "models"
 
+CSS = """
+<style>
+    /* --- Palette et fond --- */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    section[data-testid="stSidebar"] {
+        background: #0b1220;
+        border-right: 1px solid #1e293b;
+    }
+    /* --- Titres --- */
+    h1, h2, h3 {
+        font-family: 'Segoe UI', system-ui, sans-serif !important;
+        color: #e2e8f0 !important;
+        letter-spacing: -0.5px;
+    }
+    h1 { font-weight: 700 !important; }
+    p, li, label, .stMarkdown {
+        color: #cbd5e1 !important;
+        font-family: 'Segoe UI', system-ui, sans-serif !important;
+    }
+    /* --- Carte du formulaire --- */
+    [data-testid="stForm"] {
+        background: rgba(30, 41, 59, 0.75);
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 1.6rem 1.8rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(8px);
+    }
+    /* --- Champs de saisie --- */
+    [data-testid="stNumberInput"], [data-testid="stSelectbox"] {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 10px;
+    }
+    [data-baseweb="input"], [data-baseweb="select"] > div {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+        border-radius: 10px !important;
+    }
+    /* --- Boutons --- */
+    .stButton > button, [data-testid="stFormSubmitButton"] > button,
+    [data-testid="stDownloadButton"] > button {
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.3px;
+        padding: 0.55rem 1.6rem !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover,
+    [data-testid="stDownloadButton"] > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(124, 58, 237, 0.45);
+    }
+    /* --- Métriques --- */
+    [data-testid="stMetric"] {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid #334155;
+        border-radius: 14px;
+        padding: 1rem 1.2rem;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    }
+    [data-testid="stMetricLabel"] { color: #94a3b8 !important; }
+    [data-testid="stMetricValue"] { color: #38bdf8 !important; font-weight: 700 !important; }
+    /* --- Onglets --- */
+    [data-baseweb="tab-list"] { gap: 6px; border-bottom: 1px solid #334155; }
+    [data-baseweb="tab"] {
+        background: transparent; border-radius: 10px 10px 0 0;
+        color: #94a3b8; font-weight: 600; padding: 8px 22px;
+    }
+    [aria-selected="true"] {
+        background: rgba(37, 99, 235, 0.25) !important;
+        color: #60a5fa !important;
+        border-bottom: 2px solid #2563eb;
+    }
+    /* --- Messages --- */
+    [data-testid="stSuccess"] {
+        background: rgba(16, 185, 129, 0.15); border-left: 4px solid #10b981;
+        border-radius: 10px; color: #a7f3d0;
+    }
+    [data-testid="stError"] {
+        background: rgba(239, 68, 68, 0.15); border-left: 4px solid #ef4444;
+        border-radius: 10px; color: #fecaca;
+    }
+    [data-testid="stWarning"] {
+        background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b;
+        border-radius: 10px; color: #fde68a;
+    }
+    [data-testid="stInfo"] {
+        background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6;
+        border-radius: 10px; color: #bfdbfe;
+    }
+    /* --- Dataframe --- */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #334155; border-radius: 12px; overflow: hidden;
+    }
+    /* --- Uploader --- */
+    [data-testid="stFileUploader"] {
+        background: rgba(30, 41, 59, 0.7); border: 1px dashed #475569;
+        border-radius: 12px; padding: 1rem;
+    }
+    /* --- Logo sidebar --- */
+    .brand {
+        text-align: center; padding: 1.2rem 0 0.4rem;
+    }
+    .brand .logo {
+        font-size: 2.6rem; display: block; margin-bottom: 0.3rem;
+    }
+    .brand h2 {
+        font-size: 1.15rem !important; font-weight: 700 !important;
+        background: linear-gradient(90deg, #60a5fa, #a78bfa);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin: 0 !important;
+    }
+    .brand p { font-size: 0.78rem; color: #64748b !important; margin-top: 2px !important; }
+    .divider { border-top: 1px solid #1e293b; margin: 1rem 0; }
+    /* --- Header page --- */
+    .page-header {
+        background: linear-gradient(90deg, rgba(37,99,235,0.25), rgba(124,58,237,0.12));
+        border: 1px solid #334155; border-radius: 16px;
+        padding: 1.3rem 1.8rem; margin-bottom: 1.4rem;
+    }
+    .page-header h1 { margin-bottom: 0.4rem !important; font-size: 1.9rem !important; }
+    .page-header p { margin: 0 !important; color: #94a3b8 !important; font-size: 0.98rem; }
+    /* --- Footer --- */
+    .footer {
+        text-align: center; color: #475569 !important; font-size: 0.8rem;
+        padding: 2rem 0 1rem; border-top: 1px solid #1e293b; margin-top: 2.5rem;
+    }
+</style>
+"""
+
+
+def injecter_style():
+    st.markdown(CSS, unsafe_allow_html=True)
+    with st.sidebar:
+        st.markdown(
+            '<div class="brand"><span class="logo">🤖</span>'
+            "<h2>ML Predict Studio</h2>"
+            "<p>Modèles de Machine Learning</p></div>"
+            '<div class="divider"></div>',
+            unsafe_allow_html=True,
+        )
+    st.markdown(
+        '<div class="footer">ML Predict Studio — Propulsé par Streamlit &amp; scikit-learn</div>',
+        unsafe_allow_html=True,
+    )
+
 
 # ----------------------------------------------------------------------
 # Pré-traitement propre à une page
@@ -280,12 +433,28 @@ def onglet_unitaire(cfg, art):
         st.error("Prédiction impossible avec ces valeurs.")
         afficher_problemes(problemes)
     elif cfg["task"] == "classification":
-        st.success(f"{cfg['target_label']} : **{out.loc[0, nom_pred]}**")
+        st.markdown(
+            f'<div style="background:rgba(16,185,129,0.12);border:1px solid #10b981;'
+            f'border-radius:14px;padding:1.2rem 1.6rem;margin:0.6rem 0;">'
+            f'<span style="color:#94a3b8;font-size:0.85rem;text-transform:uppercase;'
+            f'letter-spacing:1px;">{cfg["target_label"]}</span><br>'
+            f'<span style="color:#34d399;font-size:1.7rem;font-weight:700;">'
+            f'{out.loc[0, nom_pred]}</span></div>',
+            unsafe_allow_html=True,
+        )
         if proba is not None:
             st.caption("Probabilité estimée par le modèle pour chaque classe")
             st.bar_chart(proba.iloc[0])
     else:
-        st.metric(cfg["target_label"], f"{out.loc[0, nom_pred]:,.2f}")
+        st.markdown(
+            f'<div style="background:rgba(59,130,246,0.12);border:1px solid #3b82f6;'
+            f'border-radius:14px;padding:1.2rem 1.6rem;margin:0.6rem 0;">'
+            f'<span style="color:#94a3b8;font-size:0.85rem;text-transform:uppercase;'
+            f'letter-spacing:1px;">{cfg["target_label"]}</span><br>'
+            f'<span style="color:#60a5fa;font-size:1.7rem;font-weight:700;">'
+            f'{out.loc[0, nom_pred]:,.2f}</span></div>',
+            unsafe_allow_html=True,
+        )
 
 
 def onglet_fichier(cfg, art):
@@ -332,8 +501,11 @@ def onglet_fichier(cfg, art):
 
 
 def afficher_page(cfg):
-    st.title(f"{cfg['icon']} {cfg['title']}")
-    st.markdown(cfg["description"])
+    st.markdown(
+        f'<div class="page-header"><h1>{cfg["icon"]} {cfg["title"]}</h1>'
+        f"<p>{cfg['description']}</p></div>",
+        unsafe_allow_html=True,
+    )
     art, manquants, probleme = charger_artefacts(cfg["prefix"])
     if art is None:
         if manquants:
@@ -353,7 +525,9 @@ def afficher_page(cfg):
 
 
 def main():
-    st.set_page_config(page_title="Prédictions ML", page_icon="🤖", layout="wide")
+    st.set_page_config(page_title="ML Predict Studio", page_icon="🤖", layout="wide",
+                       initial_sidebar_state="expanded")
+    injecter_style()
     pages = [
         st.Page(lambda cfg=cfg: afficher_page(cfg), title=cfg["title"], icon=cfg["icon"],
                 url_path=cfg["key"], default=(i == 0))
