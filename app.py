@@ -1,9 +1,10 @@
 """
-Application Streamlit : 3 modèles de machine learning dans une seule interface.
+Application Streamlit : 4 modèles de machine learning dans une seule interface.
 
 Page 1 : Téléphones  -> état de l'annonce        (classification)
 Page 2 : Voitures    -> Venant ou D'occasion      (classification)
 Page 3 : Voitures    -> prix de vente             (régression)
+Page 4 : Taxi        -> prix du trajet            (régression)
 
 Chaque page propose :
   - une prédiction unitaire (formulaire) ;
@@ -281,7 +282,7 @@ def injecter_style():
             "</div>"
             '<p class="brand-name">Souane\'s Models</p>'
             '<p class="brand-sub">Machine Learning</p>'
-            '<span class="brand-badge">🚀 3 modèles déployés</span>'
+            '<span class="brand-badge">🚀 4 modèles déployés</span>'
             "</div>"
             "<hr class='divider'>",
             unsafe_allow_html=True,
@@ -309,7 +310,7 @@ def nettoyer_adresse(df):
 
 
 # ----------------------------------------------------------------------
-# Configuration des 3 pages
+# Configuration des 4 pages
 #   prefix  : préfixe des fichiers .joblib de la page
 #   numeric : plage et valeur par défaut des variables numériques
 #             (plages = celles vues par le modèle à l'entraînement)
@@ -365,6 +366,26 @@ PAGES = [
             "Kms_Driven": {"type": "int", "min": 3_000, "max": 135_000, "value": 71_000, "step": 1_000},
             "Present_Price": {"type": "float", "min": 0.3, "max": 32.2, "value": 15.2, "step": 0.5},
             "Age": {"type": "int", "min": 2, "max": 16, "value": 8, "step": 1},
+        },
+    },
+    {
+        "key": "taxi",
+        "prefix": "taxi",
+        "notebook": "Reg_Mul_Reg_Ridge_Dec_Tree_Random_Forest.ipynb",
+        "icon": "🚕",
+        "title": "Taxi : prix du trajet",
+        "description": "Prédit le prix d'un trajet de taxi à partir de la distance, du moment de la journée, "
+                       "du jour, du nombre de passagers, du trafic, de la météo et des tarifs.",
+        "task": "regression",
+        "target": "Trip_Price",
+        "target_label": "Prix du trajet prédit",
+        "numeric": {
+            "Trip_Distance_km": {"type": "float", "min": 1.23, "max": 146.07, "value": 25.8, "step": 0.1},
+            "Passenger_Count": {"type": "int", "min": 1, "max": 4, "value": 2, "step": 1},
+            "Base_Fare": {"type": "float", "min": 2.01, "max": 5.0, "value": 3.5, "step": 0.01},
+            "Per_Km_Rate": {"type": "float", "min": 0.5, "max": 2.0, "value": 0.8, "step": 0.01},
+            "Per_Minute_Rate": {"type": "float", "min": 0.1, "max": 0.5, "value": 0.3, "step": 0.01},
+            "Trip_Duration_Minutes": {"type": "float", "min": 5.01, "max": 119.84, "value": 30.0, "step": 0.1},
         },
     },
 ]
