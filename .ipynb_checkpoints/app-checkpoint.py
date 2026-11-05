@@ -30,7 +30,7 @@ MODELS_DIR = Path(__file__).parent / "models"
 # Pré-traitement propre à une page
 # ----------------------------------------------------------------------
 def nettoyer_adresse(df):
-    """Même nettoyage que dans le notebook des voitures (colonne Adresse)."""
+    """Même nettoyage que dans le notebook des voitures (colonne Adresse), sans la mention de ville."""
     df = df.copy()
     if "Adresse" in df.columns:
         df["Adresse"] = (
@@ -38,6 +38,7 @@ def nettoyer_adresse(df):
             .str.replace(r"\s*,\s*", ",", regex=True)
             .str.strip()
             .replace({"Lac rose,Dakar": "Lac Rose,Dakar"})
+            .str.split(",").str[0]
         )
     return df
 
@@ -73,7 +74,7 @@ PAGES = [
         "notebook": "Model_for_car_data_complet.ipynb",
         "icon": "🚗",
         "title": "Voitures : Venant ou D'occasion",
-        "description": "Prédit si une voiture de Dakar est **Venant** ou **D'occasion** "
+        "description": "Prédit si une voiture est **Venant** ou **D'occasion** "
                        "à partir de sa marque, de son année, de sa boîte de vitesse, de son adresse et de son prix.",
         "task": "classification",
         "target": "Venant_Occasion",
