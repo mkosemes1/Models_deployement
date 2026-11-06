@@ -1,34 +1,44 @@
 """
 Application Streamlit : 4 modèles de machine learning dans une seule interface.
 
-Page 1 : Téléphones  -> état de l'annonce        (classification)
-Page 2 : Voitures    -> Venant ou D'occasion      (classification)
-Page 3 : Voitures    -> prix de vente             (régression)
-Page 4 : Taxi        -> prix du trajet            (régression)
+Page 1 : Téléphones          -> état de l'annonce         (classification)
+Page 2 : Voitures de Dakar   -> Venant ou D'occasion      (classification)
+Page 3 : Voitures            -> prix de vente             (régression)
+Page 4 : Taxi                -> prix du trajet            (régression)
 
 Chaque page propose :
   - une prédiction unitaire (formulaire) ;
   - une prédiction sur un jeu de données complet (fichier CSV ou Excel).
 
-Lancer l'application :  streamlit run app.py
 Les fichiers .joblib produits par les notebooks doivent être dans le dossier  models/
+Lancer l'application :  streamlit run app.py
 """
-import warnings
-from pathlib import Path
 
-import joblib as jb
-import numpy as np
-import pandas as pd
-import sklearn
-import streamlit as st
-from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score
+# ======================================================================
+# 1. IMPORTS ET CHEMIN DES MODÈLES
+# ======================================================================
+import warnings                      # pour détecter l'avertissement de version de scikit-learn
+from pathlib import Path             # pour construire le chemin du dossier models/
 
+import joblib as jb                  # charge les fichiers .joblib (modèle, encodeurs, scaler...)
+import numpy as np                   # valeurs manquantes (np.nan)
+import pandas as pd                  # tableaux de données
+import sklearn                       # numéro de version installé (pour le message d'avertissement)
+import streamlit as st               # l'interface web
+from sklearn.exceptions import InconsistentVersionWarning       # avertissement de version
+from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score  # métriques de comparaison
+
+# Dossier models/ situé à côté de app.py : les fichiers y sont nommés <préfixe>_model.joblib, etc.
 MODELS_DIR = Path(__file__).parent / "models"
 
+
+# ======================================================================
+# 2. DESIGN : feuille de style CSS (couleurs, cartes, boutons, onglets...)
+#    Ce bloc ne change que l'apparence, jamais les prédictions.
+# ======================================================================
 CSS = """
 <style>
-    /* ================= FOND & POLICES ================= */
+    /* ================= FOND & POLICES : dégradé sombre de la page, police, style de la barre latérale et des titres ================= */
     .stApp {
         background:
             radial-gradient(1200px 600px at 10% -10%, rgba(37,99,235,0.18), transparent 55%),
@@ -51,7 +61,7 @@ CSS = """
     p, li, .stMarkdown, label, span {
         color: #cbd5e1 !important;
     }
-    /* ================= SIDEBAR / MARQUE ================= */
+    /* ================= SIDEBAR / MARQUE : avatar, nom et badge affichés en haut de la barre latérale ================= */
     .brand {
         text-align: center;
         padding: 1.4rem 1rem 0.6rem;
@@ -86,7 +96,7 @@ CSS = """
         border: none; border-top: 1px solid rgba(51,65,85,0.7);
         margin: 1.1rem 0.4rem;
     }
-    /* ================= HEADER DE PAGE ================= */
+    /* ================= HEADER DE PAGE : bandeau coloré avec le titre et la description de chaque page ================= */
     .page-header {
         position: relative;
         background: linear-gradient(100deg, rgba(37,99,235,0.28) 0%, rgba(124,58,237,0.16) 55%, rgba(236,72,153,0.10) 100%);
@@ -112,7 +122,7 @@ CSS = """
         margin: 0 !important; color: #a5b4c8 !important;
         font-size: 1rem; line-height: 1.55; max-width: 820px;
     }
-    /* ================= FORMULAIRE ================= */
+    /* ================= FORMULAIRE : carte du formulaire de prédiction unitaire et style des champs ================= */
     [data-testid="stForm"] {
         background: linear-gradient(180deg, rgba(30,41,59,0.92) 0%, rgba(23,32,51,0.95) 100%);
         border: 1px solid rgba(71,85,105,0.8);
@@ -158,8 +168,8 @@ CSS = """
         border: 1px solid #334155 !important; border-radius: 8px !important;
     }
     [data-baseweb="input"] button:hover { background: #334155 !important; color: #fff !important; }
-    /* ================= BOUTONS ================= */
-    .stButton > button, [data-testid="stFormSubmitButton"] > button,
+    /* ================= BOUTONS : bouton « Prédire » et bouton de téléchargement ================= */
+    [data-testid="stFormSubmitButton"] > button,
     [data-testid="stDownloadButton"] > button {
         background: linear-gradient(135deg, #2563eb 0%, #6d28d9 55%, #a21caf 100%) !important;
         color: #fff !important;
@@ -173,14 +183,13 @@ CSS = """
         text-transform: uppercase;
         font-size: 0.85rem !important;
     }
-    .stButton > button:hover, [data-testid="stFormSubmitButton"] > button:hover,
+    [data-testid="stFormSubmitButton"] > button:hover,
     [data-testid="stDownloadButton"] > button:hover {
         transform: translateY(-2px);
         filter: brightness(1.12);
         box-shadow: 0 10px 28px rgba(124,58,237,0.55);
     }
-    .stButton > button:active { transform: translateY(0); }
-    /* ================= MÉTRIQUES ================= */
+    /* ================= MÉTRIQUES : cartes des compteurs (lignes, prédictions, R², ...) ================= */
     [data-testid="stMetric"] {
         background: linear-gradient(160deg, rgba(30,41,59,0.95), rgba(15,23,42,0.95));
         border: 1px solid rgba(71,85,105,0.8);
@@ -190,8 +199,7 @@ CSS = """
     }
     [data-testid="stMetricLabel"] { color: #94a3b8 !important; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.75rem !important; }
     [data-testid="stMetricValue"] { color: #38bdf8 !important; font-weight: 800 !important; font-size: 1.7rem !important; }
-    [data-testid="stMetricDelta"] { color: #34d399 !important; }
-    /* ================= ONGLETS ================= */
+    /* ================= ONGLETS : « Prédiction unitaire » / « Jeu de données complet » ================= */
     [data-baseweb="tab-list"] {
         gap: 8px; border-bottom: 1px solid rgba(51,65,85,0.8);
         padding-bottom: 4px;
@@ -210,12 +218,7 @@ CSS = """
         color: #93c5fd !important;
         border-bottom: 2px solid rgba(56,189,248,0.55) !important;
     }
-    /* ================= MESSAGES ================= */
-    [data-testid="stSuccess"] {
-        background: rgba(16,185,129,0.14); border-left: 4px solid #10b981;
-        border-radius: 12px; color: #a7f3d0 !important;
-        border-top: 1px solid rgba(16,185,129,0.25); border-right: 1px solid rgba(16,185,129,0.25); border-bottom: 1px solid rgba(16,185,129,0.25);
-    }
+    /* ================= MESSAGES : couleurs des alertes (erreur, avertissement, information) ================= */
     [data-testid="stError"] {
         background: rgba(239,68,68,0.14); border-left: 4px solid #ef4444;
         border-radius: 12px; color: #fecaca !important;
@@ -231,7 +234,7 @@ CSS = """
         border-radius: 12px; color: #bfdbfe !important;
         border-top: 1px solid rgba(59,130,246,0.25); border-right: 1px solid rgba(59,130,246,0.25); border-bottom: 1px solid rgba(59,130,246,0.25);
     }
-    /* ================= TABLEAUX / UPLOAD ================= */
+    /* ================= TABLEAUX / UPLOAD : tableau de résultats et zone de dépôt de fichier ================= */
     [data-testid="stDataFrame"] {
         border: 1px solid rgba(71,85,105,0.8); border-radius: 14px; overflow: hidden;
         box-shadow: 0 8px 24px rgba(0,0,0,0.3);
@@ -243,7 +246,7 @@ CSS = """
         transition: border-color 0.15s ease;
     }
     [data-testid="stFileUploader"]:hover { border-color: #38bdf8 !important; }
-    /* ================= RÉSULTAT PRÉDICTION ================= */
+    /* ================= RÉSULTAT PRÉDICTION : grande carte qui affiche la valeur prédite ================= */
     .pred-card {
         border-radius: 16px; padding: 1.4rem 1.8rem; margin: 0.8rem 0;
         box-shadow: 0 10px 30px rgba(0,0,0,0.35);
@@ -260,7 +263,7 @@ CSS = """
     .pred-ok .pred-value { color: #34d399; text-shadow: 0 0 24px rgba(52,211,153,0.4); }
     .pred-info { background: linear-gradient(120deg, rgba(59,130,246,0.18), rgba(37,99,235,0.10)); border-color: rgba(59,130,246,0.55); }
     .pred-info .pred-value { color: #60a5fa; text-shadow: 0 0 24px rgba(96,165,250,0.4); }
-    /* ================= FOOTER ================= */
+    /* ================= FOOTER : ligne de bas de page ================= */
     .footer {
         text-align: center; color: #475569 !important; font-size: 0.8rem;
         padding: 2.2rem 0 1.2rem; border-top: 1px solid rgba(30,41,59,0.9);
@@ -272,7 +275,10 @@ CSS = """
 
 
 def injecter_style():
+    """Injecte le CSS, puis affiche l'en-tête de la barre latérale et le pied de page."""
+    # 1) applique la feuille de style à toute l'application
     st.markdown(CSS, unsafe_allow_html=True)
+    # 2) barre latérale : avatar, nom de l'application et badge
     with st.sidebar:
         st.markdown(
             '<div class="brand">'
@@ -287,35 +293,50 @@ def injecter_style():
             "<hr class='divider'>",
             unsafe_allow_html=True,
         )
+    # 3) pied de page
     st.markdown(
         '<div class="footer"><b>Souane\'s Models</b> — Propulsé par Streamlit &amp; scikit-learn</div>',
         unsafe_allow_html=True,
     )
 
 
-# ----------------------------------------------------------------------
-# Pré-traitement propre à une page
-# ----------------------------------------------------------------------
+# ======================================================================
+# 3. NETTOYAGE DES DONNÉES ENVOYÉES (page « Voitures de Dakar » uniquement)
+# ======================================================================
 def nettoyer_adresse(df):
-    """Même nettoyage que dans le notebook des voitures (colonne Adresse), sans la mention de ville."""
-    df = df.copy()
+    """
+    Applique à la colonne « Adresse » EXACTEMENT le même nettoyage que le notebook
+    Model_for_car_data_complet.ipynb.
+
+    Pourquoi c'est nécessaire : le modèle a été entraîné avec des adresses nettoyées (ex. « Almadies »).
+    Un fichier brut contient « Almadies,Dakar » ou « Almadies, Dakar » : sans ce nettoyage,
+    l'encodeur ne reconnaîtrait aucune adresse et toutes les lignes seraient ignorées.
+    Si vous changez le nettoyage dans le notebook, changez-le aussi ici.
+    """
+    df = df.copy()  # on ne modifie pas le fichier d'origine
     if "Adresse" in df.columns:
         df["Adresse"] = (
             df["Adresse"].astype("string")
-            .str.replace(r"\s*,\s*", ",", regex=True)
-            .str.strip()
-            .replace({"Lac rose,Dakar": "Lac Rose,Dakar"})
-            .str.split(",").str[0]
+            .str.replace(r"\s*,\s*", ",", regex=True)         # 1) espaces autour de la virgule
+            .str.strip()                                       # 1) espaces en début et fin de texte
+            .replace({"Lac rose,Dakar": "Lac Rose,Dakar"})     # 2) même adresse écrite avec deux majuscules
+            .str.split(",").str[0]                             # 3) on garde le quartier : « Almadies,Dakar » -> « Almadies »
         )
     return df
 
 
-# ----------------------------------------------------------------------
-# Configuration des 4 pages
-#   prefix  : préfixe des fichiers .joblib de la page
-#   numeric : plage et valeur par défaut des variables numériques
-#             (plages = celles vues par le modèle à l'entraînement)
-# ----------------------------------------------------------------------
+# ======================================================================
+# 4. CONFIGURATION DES 4 PAGES
+#    key / title / icon / description : identité de la page (URL, titre, texte d'introduction)
+#    prefix   : début du nom des fichiers .joblib de la page (ex. « taxi » -> models/taxi_model.joblib)
+#    notebook : notebook à exécuter si les fichiers sont absents (affiché dans le message d'erreur)
+#    task     : « classification » (prédit une catégorie) ou « regression » (prédit un nombre)
+#    target   : nom de la variable cible ; target_label : texte affiché au-dessus du résultat
+#    preprocess : fonction de nettoyage appliquée avant la prédiction (optionnel)
+#    numeric  : pour chaque variable numérique, type, plage et valeur par défaut du champ de saisie.
+#               Les plages = celles vues par le modèle à l'entraînement : à mettre à jour
+#               si vous relancez un notebook qui modifie les données (traitement des valeurs aberrantes).
+# ======================================================================
 PAGES = [
     {
         "key": "telephones",
@@ -329,10 +350,10 @@ PAGES = [
         "target": "etat",
         "target_label": "État prédit",
         "numeric": {
-            "prix": {"type": "int", "min": 1, "max": 3_335_000, "value": 362_043, "step": 10_000},
-            "dim_ecr": {"type": "float", "min": 0.0, "max": 75.0, "value": 6.0, "step": 0.1},
-            "ram": {"type": "int", "min": 1, "max": 512, "value": 12, "step": 1},
-            "stockage": {"type": "int", "min": 1, "max": 5120, "value": 158, "step": 1},
+            "prix": {"type": "int", "min": 1, "max": 795_000, "value": 362_043, "step": 10_000},
+            "dim_ecr": {"type": "float", "min": 5.0, "max": 8.0, "value": 6.0, "step": 0.1},
+            "ram": {"type": "int", "min": 7, "max": 16, "value": 12, "step": 1},
+            "stockage": {"type": "int", "min": 1, "max": 348, "value": 158, "step": 1},
         },
     },
     {
@@ -341,15 +362,15 @@ PAGES = [
         "notebook": "Model_for_car_data_complet.ipynb",
         "icon": "🚗",
         "title": "Voitures : Venant ou D'occasion",
-        "description": "Prédit si une voiture est **Venant** ou **D'occasion** "
+        "description": "Prédit si une voiture de Dakar est **Venant** ou **D'occasion** "
                        "à partir de sa marque, de son année, de sa boîte de vitesse, de son adresse et de son prix.",
         "task": "classification",
         "target": "Venant_Occasion",
         "target_label": "Catégorie prédite",
         "preprocess": nettoyer_adresse,
         "numeric": {
-            "Année": {"type": "int", "min": 1990, "max": 2024, "value": 2015, "step": 1},
-            "Prix": {"type": "int", "min": 1, "max": 779_414_131, "value": 7_800_000, "step": 100_000},
+            "Année": {"type": "int", "min": 2009, "max": 2020, "value": 2015, "step": 1},
+            "Prix": {"type": "int", "min": 1, "max": 24_000_000, "value": 7_800_000, "step": 100_000},
         },
     },
     {
@@ -381,7 +402,7 @@ PAGES = [
         "target": "Trip_Price",
         "target_label": "Prix du trajet prédit",
         "numeric": {
-            "Trip_Distance_km": {"type": "float", "min": 1.23, "max": 146.07, "value": 25.8, "step": 0.1},
+            "Trip_Distance_km": {"type": "float", "min": 1.23, "max": 49.99, "value": 25.8, "step": 0.1},
             "Passenger_Count": {"type": "int", "min": 1, "max": 4, "value": 2, "step": 1},
             "Base_Fare": {"type": "float", "min": 2.01, "max": 5.0, "value": 3.5, "step": 0.01},
             "Per_Km_Rate": {"type": "float", "min": 0.5, "max": 2.0, "value": 0.8, "step": 0.01},
@@ -392,18 +413,20 @@ PAGES = [
 ]
 
 
-# ----------------------------------------------------------------------
-# Chargement des fichiers sauvegardés par les notebooks
-# ----------------------------------------------------------------------
-@st.cache_resource(show_spinner=False)
+# ======================================================================
+# 5. CHARGEMENT DES FICHIERS SAUVEGARDÉS PAR LES NOTEBOOKS
+# ======================================================================
+@st.cache_resource(show_spinner=False)   # chargé une seule fois puis gardé en mémoire (application plus rapide)
 def charger_artefacts(prefix):
-    """Retourne (artefacts, fichiers_manquants, probleme)."""
+    """Charge les 5 fichiers d'un modèle. Retourne (artefacts, fichiers_manquants, probleme)."""
+    # model = le modèle ; encoders = les encodeurs des variables catégorielles ; scaler = la normalisation ;
+    # uniques = les valeurs des listes déroulantes ; features = l'ordre des variables
     noms = ["model", "encoders", "scaler", "uniques", "features"]
     manquants = [f"{prefix}_{n}.joblib" for n in noms if not (MODELS_DIR / f"{prefix}_{n}.joblib").exists()]
     if manquants:
         return None, manquants, None
     try:
-        with warnings.catch_warnings(record=True) as avertissements:
+        with warnings.catch_warnings(record=True) as avertissements:   # on capture les avertissements de chargement
             warnings.simplefilter("always")
             art = {n: jb.load(MODELS_DIR / f"{prefix}_{n}.joblib") for n in noms}
     except Exception as e:  # fichier illisible : le plus souvent, version de scikit-learn différente
@@ -419,58 +442,62 @@ def charger_artefacts(prefix):
     return art, [], probleme
 
 
-# ----------------------------------------------------------------------
-# Prédiction (utilisée pour une ligne comme pour un fichier complet)
-# ----------------------------------------------------------------------
+# ======================================================================
+# 6. PRÉDICTION (utilisée pour une seule ligne comme pour un fichier complet)
+# ======================================================================
 def predire(df_in, art, cfg):
     """
-    Applique les mêmes étapes que dans le notebook : encodage -> scaler -> modèle.
-    Retourne (tableau avec prédictions, problèmes rencontrés, probabilités ou None).
+    Refait les mêmes étapes que dans le notebook : nettoyage -> encodage -> scaler -> modèle.
+    Retourne (tableau avec la colonne prédite, problèmes rencontrés, probabilités ou None).
     Les lignes avec une valeur inconnue ou manquante ne sont pas prédites (NaN).
     """
     features, encoders, uniques = art["features"], art["encoders"], art["uniques"]
     df_in = df_in.reset_index(drop=True)
+    # nettoyage propre à la page (ex. adresses), sinon simple copie
     df = cfg["preprocess"](df_in) if cfg.get("preprocess") else df_in.copy()
 
+    # le fichier doit contenir toutes les colonnes utilisées par le modèle
     absentes = [c for c in features if c not in df.columns]
     if absentes:
         raise ValueError("Colonnes manquantes dans le fichier : " + ", ".join(absentes))
 
-    X = pd.DataFrame(index=df.index, columns=features, dtype=float)
-    valide = pd.Series(True, index=df.index)
+    X = pd.DataFrame(index=df.index, columns=features, dtype=float)   # tableau des valeurs numériques finales
+    valide = pd.Series(True, index=df.index)                           # False = ligne impossible à prédire
     problemes = {}
 
     for col in features:
-        if col in uniques:  # variable catégorielle -> encodeur sauvegardé
-            connue = df[col].isin(encoders[col].classes_)
+        if col in uniques:  # variable catégorielle -> on applique l'encodeur sauvegardé
+            connue = df[col].isin(encoders[col].classes_)   # valeur connue de l'encodeur ?
             if connue.any():
                 X.loc[connue, col] = encoders[col].transform(df.loc[connue, col].astype(str))
             if (~connue).any():
                 exemples = df.loc[~connue, col].dropna().astype(str).unique()[:5].tolist()
                 problemes[col] = (int((~connue).sum()), exemples)
             valide &= connue
-        else:  # variable numérique
+        else:  # variable numérique -> conversion en nombres
             nombres = pd.to_numeric(df[col], errors="coerce")
             X[col] = nombres
             if nombres.isna().any():
                 problemes[col] = (int(nombres.isna().sum()), ["valeur absente ou non numérique"])
             valide &= nombres.notna()
 
-    out = df_in.copy()
+    out = df_in.copy()                       # on garde les colonnes d'origine du fichier
     nom_pred = f"{cfg['target']}_prédit"
     out[nom_pred] = np.nan
     proba = None
 
     if valide.any():
+        # normalisation avec le scaler sauvegardé, puis prédiction du modèle
         Xs = art["scaler"].transform(X.loc[valide, features].to_numpy(dtype=float))
         pred = art["model"].predict(Xs)
         index_ok = X.index[valide]
 
         if cfg["task"] == "classification":
             enc_cible = encoders[cfg["target"]]
+            # on retrouve le texte de la classe (ex. 0 -> « D'occasion ») avec l'encodeur de la cible
             out[nom_pred] = pd.Series(enc_cible.inverse_transform(pred.astype(int)), index=index_ok)
-            if hasattr(art["model"], "predict_proba"):
-                proba = pd.DataFrame(art["model"].predict_proba(Xs), columns=enc_cible.classes_, index=index_ok)
+            # probabilité de chaque classe (affichée dans le graphique de la prédiction unitaire)
+            proba = pd.DataFrame(art["model"].predict_proba(Xs), columns=enc_cible.classes_, index=index_ok)
         else:
             out[nom_pred] = pd.Series(pred, index=index_ok).round(2)
 
@@ -482,7 +509,7 @@ def evaluer(out, cfg):
     cible, nom_pred = cfg["target"], f"{cfg['target']}_prédit"
     if cible not in out.columns:
         return None
-    ok = out[nom_pred].notna()
+    ok = out[nom_pred].notna()   # seulement les lignes réellement prédites
     if cfg["task"] == "classification":
         if not ok.any():
             return None
@@ -498,7 +525,7 @@ def evaluer(out, cfg):
 
 
 def lignes_hors_plage(df, cfg):
-    """Nombre de lignes dont une variable numérique sort de la plage vue à l'entraînement."""
+    """Compte les lignes dont une variable numérique sort de la plage vue à l'entraînement (prédictions peu fiables)."""
     masque = pd.Series(False, index=df.index)
     for col, spec in cfg["numeric"].items():
         if col in df.columns:
@@ -507,11 +534,14 @@ def lignes_hors_plage(df, cfg):
     return int(masque.sum())
 
 
+# ======================================================================
+# 7. LECTURE DU FICHIER ENVOYÉ PAR L'UTILISATEUR
+# ======================================================================
 def lire_fichier(fichier):
     """Lit un fichier CSV (séparateur , ou ;) ou Excel."""
     if fichier.name.lower().endswith(".xlsx"):
         return pd.read_excel(fichier)
-    for encodage in ("utf-8-sig", "latin-1"):
+    for encodage in ("utf-8-sig", "latin-1"):   # on essaie UTF-8, puis le codage des CSV Excel français
         try:
             fichier.seek(0)
             df = pd.read_csv(fichier, encoding=encodage)
@@ -524,37 +554,37 @@ def lire_fichier(fichier):
     raise ValueError("Impossible de lire ce fichier CSV.")
 
 
-# ----------------------------------------------------------------------
-# Interface
-# ----------------------------------------------------------------------
+# ======================================================================
+# 8. INTERFACE : formulaire, onglets et pages
+# ======================================================================
 def champ_numerique(label, spec, key):
-    mini, maxi = spec.get("min"), spec.get("max")
-    if spec.get("type", "float") == "int":
-        return st.number_input(label, min_value=mini, max_value=maxi, value=int(spec["value"]),
-                               step=int(spec.get("step", 1)), key=key)
-    return st.number_input(label, min_value=None if mini is None else float(mini),
-                           max_value=None if maxi is None else float(maxi), value=float(spec["value"]),
-                           step=float(spec.get("step", 0.1)), key=key)
+    """Crée le champ de saisie d'une variable numérique d'après sa configuration (entier ou décimal)."""
+    if spec["type"] == "int":
+        return st.number_input(label, min_value=spec["min"], max_value=spec["max"],
+                               value=spec["value"], step=spec["step"], key=key)
+    return st.number_input(label, min_value=float(spec["min"]), max_value=float(spec["max"]),
+                           value=float(spec["value"]), step=float(spec["step"]), key=key)
 
 
 def afficher_problemes(problemes):
+    """Affiche un avertissement par colonne qui a fait ignorer des lignes (valeur inconnue ou manquante)."""
     for col, (nb, exemples) in problemes.items():
         st.warning(f"**{col}** : {nb} ligne(s) ignorée(s) ({', '.join(exemples)}).")
 
 
 def onglet_unitaire(cfg, art):
+    """Onglet 1 : formulaire de prédiction pour une seule ligne."""
     nom_pred = f"{cfg['target']}_prédit"
     with st.form(f"form_{cfg['key']}"):
-        colonnes = st.columns(2)
+        colonnes = st.columns(2)   # les champs sont répartis sur 2 colonnes
         valeurs = {}
         for i, f in enumerate(art["features"]):
             with colonnes[i % 2]:
                 label, key = f.replace("_", " "), f"{cfg['key']}_{f}"
-                if f in art["uniques"]:
+                if f in art["uniques"]:   # variable catégorielle -> liste déroulante
                     valeurs[f] = st.selectbox(label, art["uniques"][f], key=key)
-                else:
-                    spec = cfg["numeric"].get(f, {"type": "float", "value": 0.0, "step": 1.0})
-                    valeurs[f] = champ_numerique(label, spec, key)
+                else:                     # variable numérique -> champ numérique
+                    valeurs[f] = champ_numerique(label, cfg["numeric"][f], key)
         soumis = st.form_submit_button("Prédire")
 
     if not soumis:
@@ -568,16 +598,17 @@ def onglet_unitaire(cfg, art):
         st.error("Prédiction impossible avec ces valeurs.")
         afficher_problemes(problemes)
     elif cfg["task"] == "classification":
+        # carte verte avec la classe prédite, puis graphique des probabilités
         st.markdown(
             f'<div class="pred-card pred-ok">'
             f'<div class="pred-label">{cfg["target_label"]}</div>'
             f'<div class="pred-value">{out.loc[0, nom_pred]}</div></div>',
             unsafe_allow_html=True,
         )
-        if proba is not None:
-            st.caption("Probabilité estimée par le modèle pour chaque classe")
-            st.bar_chart(proba.iloc[0])
+        st.caption("Probabilité estimée par le modèle pour chaque classe")
+        st.bar_chart(proba.iloc[0])
     else:
+        # carte bleue avec le nombre prédit
         st.markdown(
             f'<div class="pred-card pred-info">'
             f'<div class="pred-label">{cfg["target_label"]}</div>'
@@ -587,6 +618,7 @@ def onglet_unitaire(cfg, art):
 
 
 def onglet_fichier(cfg, art):
+    """Onglet 2 : prédictions sur un fichier complet, comparaison éventuelle et téléchargement."""
     nom_pred = f"{cfg['target']}_prédit"
     st.info("Colonnes attendues : " + ", ".join(art["features"])
             + f". Si le fichier contient aussi la colonne `{cfg['target']}`, les prédictions seront comparées aux vraies valeurs.")
@@ -600,6 +632,7 @@ def onglet_fichier(cfg, art):
         st.error(str(e))
         return
 
+    # compteurs : lignes lues, lignes prédites, lignes ignorées
     nb_ok = int(out[nom_pred].notna().sum())
     c1, c2, c3 = st.columns(3)
     c1.metric("Lignes du fichier", len(out))
@@ -611,6 +644,7 @@ def onglet_fichier(cfg, art):
         st.warning(f"{hors} ligne(s) ont une valeur numérique en dehors de la plage vue à l'entraînement "
                    f"({', '.join(cfg['numeric'])}) : leurs prédictions sont peu fiables.")
 
+    # comparaison avec les vraies valeurs si le fichier contient la colonne cible
     resultats = evaluer(out, cfg)
     if resultats:
         st.subheader(f"Comparaison avec la colonne {cfg['target']} du fichier")
@@ -618,6 +652,7 @@ def onglet_fichier(cfg, art):
             colonne.metric(nom, valeur)
         st.caption("Indicatif : le modèle a déjà vu une partie de ces données pendant son entraînement.")
 
+    # tableau des résultats, graphique et téléchargement
     st.subheader("Résultats")
     st.dataframe(out.head(1000))
     if len(out) > 1000:
@@ -630,13 +665,14 @@ def onglet_fichier(cfg, art):
 
 
 def afficher_page(cfg):
+    """Affiche une page complète : bandeau de titre, chargement des fichiers, puis les 2 onglets."""
     st.markdown(
         f'<div class="page-header"><h1>{cfg["icon"]} {cfg["title"]}</h1>'
         f"<p>{cfg['description']}</p></div>",
         unsafe_allow_html=True,
     )
     art, manquants, probleme = charger_artefacts(cfg["prefix"])
-    if art is None:
+    if art is None:   # fichiers absents ou illisibles : message clair puis arrêt de la page
         if manquants:
             st.error("Fichiers introuvables dans le dossier `models/` : " + ", ".join(manquants)
                      + f". Exécutez le notebook `{cfg['notebook']}` puis copiez ces fichiers dans `models/`.")
@@ -644,7 +680,7 @@ def afficher_page(cfg):
             st.error(f"Impossible de charger les modèles ({probleme}). Vérifiez que la version de "
                      "scikit-learn dans requirements.txt est celle utilisée dans les notebooks.")
         st.stop()
-    if probleme:
+    if probleme:   # modèles chargés mais version de scikit-learn différente
         st.warning(probleme)
     onglet1, onglet2 = st.tabs(["Prédiction unitaire", "Prédiction sur un jeu de données complet"])
     with onglet1:
@@ -653,10 +689,14 @@ def afficher_page(cfg):
         onglet_fichier(cfg, art)
 
 
+# ======================================================================
+# 9. POINT D'ENTRÉE : configuration de la page et navigation entre les 4 pages
+# ======================================================================
 def main():
     st.set_page_config(page_title="Souane's Models", page_icon="🧠", layout="wide",
                        initial_sidebar_state="expanded")
-    injecter_style()
+    injecter_style()   # design + barre latérale + pied de page
+    # une page de navigation par modèle, construite à partir de la liste PAGES (la 1re est la page d'accueil)
     pages = [
         st.Page(lambda cfg=cfg: afficher_page(cfg), title=cfg["title"], icon=cfg["icon"],
                 url_path=cfg["key"], default=(i == 0))
