@@ -1,41 +1,21 @@
-"""
-Application Streamlit : 4 modèles de machine learning dans une seule interface.
+import warnings                     
+from pathlib import Path             
 
-Page 1 : Téléphones          -> état de l'annonce         (classification)
-Page 2 : Voitures de Dakar   -> Venant ou D'occasion      (classification)
-Page 3 : Voitures            -> prix de vente             (régression)
-Page 4 : Taxi                -> prix du trajet            (régression)
-
-Chaque page propose :
-  - une prédiction unitaire (formulaire) ;
-  - une prédiction sur un jeu de données complet (fichier CSV ou Excel).
-
-Les fichiers .joblib produits par les notebooks doivent être dans le dossier  models/
-Lancer l'application :  streamlit run app.py
-"""
-
-# ======================================================================
-# 1. IMPORTS ET CHEMIN DES MODÈLES
-# ======================================================================
-import warnings                      # pour détecter l'avertissement de version de scikit-learn
-from pathlib import Path             # pour construire le chemin du dossier models/
-
-import joblib as jb                  # charge les fichiers .joblib (modèle, encodeurs, scaler...)
-import numpy as np                   # valeurs manquantes (np.nan)
-import pandas as pd                  # tableaux de données
-import sklearn                       # numéro de version installé (pour le message d'avertissement)
-import streamlit as st               # l'interface web
-from sklearn.exceptions import InconsistentVersionWarning       # avertissement de version
-from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score  # métriques de comparaison
+import joblib as jb                  
+import numpy as np                   
+import pandas as pd                 
+import sklearn                       
+import streamlit as st              
+from sklearn.exceptions import InconsistentVersionWarning      
+from sklearn.metrics import accuracy_score, mean_absolute_error, r2_score  
 
 # Dossier models/ situé à côté de app.py : les fichiers y sont nommés <préfixe>_model.joblib, etc.
 MODELS_DIR = Path(__file__).parent / "models"
 
 
-# ======================================================================
 # 2. DESIGN : feuille de style CSS (couleurs, cartes, boutons, onglets...)
-#    Ce bloc ne change que l'apparence, jamais les prédictions.
-# ======================================================================
+
+
 CSS = """
 <style>
     /* ================= FOND & POLICES : dégradé sombre de la page, police, style de la barre latérale et des titres ================= */
